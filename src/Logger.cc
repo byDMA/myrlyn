@@ -584,13 +584,11 @@ QString Logger::expandVariables( const QString & unexpanded )
 void Logger::writeTailLogScript( const QString & logDir,
                                  const QString & logFilename )
 {
-    static bool scriptWritten = false;
-
-    if ( scriptWritten )
-        return;
-
     QString scriptFilename( logDir + "/tail-log" );
     QFile   scriptFile( scriptFilename );
+
+    if ( scriptFile.exists() )
+        return;
 
     if ( ! scriptFile.open( QIODevice::WriteOnly | QIODevice::Text ) )
     {
@@ -605,12 +603,12 @@ void Logger::writeTailLogScript( const QString & logDir,
            << "\n"
            << "rm -f " << logFilename
            << "; clear"
-           << "; tail -F " << logFilename
+           << "; tail -F " << logFilename << " 2>/dev/null"
+           << "\n"
            << Qt::endl;
 
     scriptFile.setPermissions( QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner |
                                QFile::ReadGroup | QFile::ReadOther );
-    scriptWritten = true;
 }
 
 
