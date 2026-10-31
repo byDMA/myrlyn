@@ -50,6 +50,7 @@
 #include "QY2CursorHelper.h"
 #include "MyrlynApp.h"
 #include "RepoConfigDialog.h"
+#include "SysUtil.h"
 #include "ZyppHistory.h"
 #include "ZyppHistoryBrowser.h"
 #include "ZyppHistoryParser.h"
@@ -902,13 +903,13 @@ YQPkgSelector::addMenus()
     // Note: The help functions and their texts are moved out
     // to a separate source file YQPkgSelHelp.cc
 
-    if ( canOpenInBrowser() )
+    if ( SysUtil::canOpenInBrowser() )
         helpMenu->addAction( _( "&Overview" ), this, SLOT( help()    ) );
 
     helpMenu->addAction( _( "About &Myrlyn" ), this, SLOT( about()   ) );
     helpMenu->addAction( _( "About &Qt"     ), qApp, SLOT( aboutQt() ) );
 
-    if ( canOpenInBrowser() )
+    if ( SysUtil::canOpenInBrowser() )
     {
         helpMenu->addSeparator();
         helpMenu->addAction( _( "Rep&ository Configuration" ), this, SLOT( helpRepoConfig()        ) );

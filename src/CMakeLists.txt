@@ -39,6 +39,7 @@ set( SOURCES
   RepoTable.cc
   SearchFilter.cc
   SummaryPage.cc
+  SysUtil.cc
   WindowSettings.cc
   Workflow.cc
 

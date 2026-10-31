@@ -14,15 +14,15 @@
  */
 
 
-#include <grp.h>     // setgroups()
 #include <QString>
-#include <QProcess>
 
 #include "Logger.h"
 #include "utf8.h"
 #include "ui_about-dialog.h"
-
+#include "SysUtil.h"
 #include "YQPkgSelector.h"
+
+using SysUtil::openInBrowser;
 
 
 void YQPkgSelector::help() const
@@ -76,93 +76,5 @@ void YQPkgSelector::about()
 
     aboutDialog.exec();
     delete ui;
-}
-
-
-void YQPkgSelector::openInBrowser( const QString & url )
-{
-    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-    QProcess process;
-
-    if ( getuid() == 0 ) // Running as root?
-    {
-        if ( ! dropPrivileges( &process, &env ) )
-        {
-            logError() << "Can't drop privileges to open URL " << url << endl;
-            return;
-        }
-    }
-
-    process.setProgram( "/usr/bin/xdg-open" );
-    process.setArguments( QStringList() << url );
-    process.setProcessEnvironment( env );
-
-    logDebug() << "Opening URL " << url << endl;
-    process.startDetached();
-}
-
-
-bool YQPkgSelector::dropPrivileges( QProcess *            process,
-                                    QProcessEnvironment * env )
-{
-    bool ok1, ok2;
-    int sudoUid = env->value( "SUDO_UID" ).toInt( &ok1 );
-    int sudoGid = env->value( "SUDO_GID" ).toInt( &ok2 );
-    QString sudoUser = env->value( "SUDO_USER" );
-    QString sudoHome = env->value( "SUDO_HOME" );
-    QString rootHome = env->value( "HOME", "/root" );
-
-    if ( ! ok1 || ! ok2 || sudoUser.isEmpty() || sudoHome.isEmpty() )
-        return false; // error
-
-    env->insert( "USER", sudoUser );
-    env->insert( "HOME", sudoHome );
-
-    // Change environment variables starting with "/root" to $SUDO_HOME
-
-    for ( const QString & key: env->keys() )
-    {
-        QString val = env->value( key );
-
-        if ( val.startsWith( rootHome ) )
-        {
-            val.replace( rootHome, sudoHome );
-            env->insert( key, val );
-        }
-    }
-
-    logDebug() << "Dropping root privileges down to UID "
-               << sudoUid << " and GID " << sudoGid << endl;
-
-    process->setChildProcessModifier( [ sudoUid, sudoGid ]
-        {
-            // Get rid of group 0 (root) first
-            setgid( sudoGid );
-
-            const gid_t groups[] = { (gid_t) sudoGid };
-
-            // This needs root permissions, so we need to do it before setuid()
-            setgroups( sizeof( groups ) / sizeof( gid_t ), groups );
-
-            // Drop privileges
-            setuid( sudoUid );
-        } );
-
-    return true; // success
-}
-
-
-bool YQPkgSelector::canOpenInBrowser()
-{
-    if ( geteuid() != 0 )       // Not running as root?
-        return true;
-
-    // if the SUDO_USER environment variable and related are set,
-    // we can drop privileges, so we can safely run 'xdg-open'.
-    //
-    // But only 'sudo' (and 'myrlyn-sudo') does this; others like 'kdesu',
-    // 'gnomesu', 'xdg-su' don't.
-
-    return ! qgetenv( "SUDO_USER" ).isEmpty();
 }
 
