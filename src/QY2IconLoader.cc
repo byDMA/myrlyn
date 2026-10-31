@@ -77,7 +77,8 @@ QIcon QY2IconLoader::loadBuiltInIcon( const QString & iconName )
     }
     else
     {
-        logWarning() << "No built-in icon " << iconName << endl;
+        if ( ! iconName.contains( "yast" ) )  // Suppress warning about obsolete technology
+             logWarning() << "No built-in icon " << iconName << endl;
 
         return QIcon();
     }
