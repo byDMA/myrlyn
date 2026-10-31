@@ -309,6 +309,13 @@ protected:
      **/
     static QString oldNamePattern( const QString & filename );
 
+    /**
+     * Write a helper script 'tail-log' to the log directory
+     * for easy following the log in a terminal window.
+     **/
+    static void writeTailLogScript( const QString & logDir,
+                                    const QString & logFilename );
+
 
 private:
 

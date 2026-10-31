@@ -67,6 +67,7 @@ Logger::Logger( const QString & rawLogDir,
     if ( doRotate )
         logRotate( logDir, filename, logRotateCount );
 
+    writeTailLogScript( logDir, filename );
     openLogFile( logDir + "/" + filename );
 }
 
@@ -577,6 +578,39 @@ QString Logger::expandVariables( const QString & unexpanded )
     expanded.replace( "$UID" , QString::number( getuid() ) );
 
     return expanded;
+}
+
+
+void Logger::writeTailLogScript( const QString & logDir,
+                                 const QString & logFilename )
+{
+    static bool scriptWritten = false;
+
+    if ( scriptWritten )
+        return;
+
+    QString scriptFilename( logDir + "/tail-log" );
+    QFile   scriptFile( scriptFilename );
+
+    if ( ! scriptFile.open( QIODevice::WriteOnly | QIODevice::Text ) )
+    {
+	cerr << "Can't open " << qPrintable( scriptFilename ) << std::endl;
+	return;
+    }
+
+    QTextStream script( &scriptFile );
+
+    script << "#/bin/bash\n"
+           << "# Use this script to follow the log in a terminal window\n"
+           << "\n"
+           << "rm -f " << logFilename
+           << "; clear"
+           << "; tail -F " << logFilename
+           << Qt::endl;
+
+    scriptFile.setPermissions( QFile::ReadOwner | QFile::WriteOwner | QFile::ExeOwner |
+                               QFile::ReadGroup | QFile::ReadOther );
+    scriptWritten = true;
 }
 
 
